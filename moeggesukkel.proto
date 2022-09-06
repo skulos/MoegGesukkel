@@ -1,0 +1,30 @@
+syntax = "proto3";
+
+package moeggesukkel;
+
+option go_package = "moeggesukkel/";
+
+message UploadRequest {
+    string filename = 1;
+    int64 time = 2;
+    bytes data = 3;
+}
+
+message UploadResponse {
+    string token = 1;
+}
+
+message DownloadRequest {
+    string token = 1;
+}
+
+message DownloadResponse {
+    string filename = 1;
+    // int64 index = 2;
+    bytes data = 2;
+}
+
+service MoegGeSukkel {
+    rpc upload (stream UploadRequest) returns (UploadResponse);
+    rpc download (DownloadRequest) returns (stream DownloadResponse);
+}
