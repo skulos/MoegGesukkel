@@ -64,7 +64,7 @@ func Init() {
 		ttlcache.WithTTL[string, string](30 * time.Minute),
 	)
 
-	cache.OnEviction(func(ctx context.Context, reason ttlcache.EvictionReason, item *ttlcache.Item[string, string]) {
+	cache.OnEviction(func(_ context.Context, _ ttlcache.EvictionReason, item *ttlcache.Item[string, string]) {
 		path := item.Value()
 		log.Info("Removing ", item.Key(), " @ ", path, " # ", item.TTL())
 		os.Remove(path)
