@@ -1,6 +1,7 @@
 package main
 
 import (
+	"EkSukkel/moeggesukkel"
 	"archive/tar"
 	"compress/gzip"
 	"fmt"
@@ -8,133 +9,170 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"time"
 
 	"github.com/hyperledger/fabric/common/flogging"
-	"github.com/k0kubun/go-ansi"
-	"github.com/schollz/progressbar/v3"
+	"google.golang.org/grpc"
+
+	// "github.com/schollz/progressbar/v3"
 	"github.com/spf13/cobra"
 )
 
 var log = flogging.MustGetLogger("MAIN")
+var conn *grpc.ClientConn
+
+func upload(add, path string) {}
+
+func download(add, token string) {}
+
+func client(add string) *moeggesukkel.MoegGeSukkelClient {
+	var err error
+	conn, err = grpc.Dial(add)
+	if err != nil {
+		log.Panic("failed to create gRPC connection")
+	}
+
+	mgc := moeggesukkel.NewMoegGeSukkelClient(conn)
+
+	return &mgc
+}
 
 func main() {
-	var echoTimes int
 
-	var cmdPrint = &cobra.Command{
-		Use:   "print [string to print]",
-		Short: "Print anything to the screen",
-		Long: `print is for printing anything back to the screen.
-For many years people have printed back to the screen.`,
-		Args: cobra.MinimumNArgs(1),
-		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Println("Print: " + strings.Join(args, " "))
-		},
+	// Silent
+	var silent bool
+
+	// TTL
+	var ttl int64
+
+	// Address
+	var address string
+
+	// Other
+	var other string
+
+	// Commands
+	rootCmd := &cobra.Command{
+		Use:   "moeggesukkel",
+		Short: "gRPC client for a gRPC server",
+		Long:  "Moeggesukkel is a gRPC client that connects to a gRPC server",
 	}
 
-	var cmdEcho = &cobra.Command{
-		Use:   "echo [string to echo]",
-		Short: "Echo anything to the screen",
-		Long: `echo is for echoing anything back.
-Echo works a lot like print, except it has a child command.`,
-		Args: cobra.MinimumNArgs(1),
+	// Download
+	downloadCmd := &cobra.Command{
+		Use:   "download [token]",
+		Short: "downloads the given token from the server",
+		Long:  "Passes the token to the Moeggesukkel server to download",
 		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Println("Print: " + strings.Join(args, " "))
-		},
-	}
-
-	var cmdTimes = &cobra.Command{
-		Use:   "times [# times] [string to echo]",
-		Short: "Echo anything to the screen more times",
-		Long: `echo things multiple times back to the user by providing
-a count and a string.`,
-		Args: cobra.MinimumNArgs(1),
-		Run: func(cmd *cobra.Command, args []string) {
-			for i := 0; i < echoTimes; i++ {
-				fmt.Println("Echo: " + strings.Join(args, " "))
+			// Do Stuff Here
+			if len(args) != 2 {
+				log.Error("Incorrect arguments: provide only [address] & [token]")
+			} else {
+				address = args[0]
+				other = args[1]
+				log.Info("[address]: ", address, "  [token]: ", other)
 			}
+
+			// Download function
 		},
 	}
 
-	cmdTimes.Flags().IntVarP(&echoTimes, "times", "t", 1, "times to echo the input")
+	downloadCmd.Flags().BoolVarP(&silent, "silent", "s", false, "show progress bars")
 
-	var rootCmd = &cobra.Command{Use: "app"}
-	rootCmd.AddCommand(cmdPrint, cmdEcho)
-	cmdEcho.AddCommand(cmdTimes)
-	// rootCmd.Execute()
+	// Upload
+	uploadCmd := &cobra.Command{
+		Use:   "upload [path/to/file]",
+		Short: "uploads the given file or directory to the server",
+		Long:  "Streams the file or directory to the Moeggesukkel server and prints the tokens",
+		Run: func(cmd *cobra.Command, args []string) {
+			// Do Stuff Here
+			if len(args) != 2 {
+				log.Error("Incorrect arguments: provide only [address] & [path/to/file]")
+			} else {
+				address = args[0]
+				other = args[1]
+				log.Info("[address]: ", address, "  [path/to/file]: ", other)
+			}
+
+		},
+	}
+
+	uploadCmd.Flags().Int64VarP(&ttl, "ttl", "t", 3600, "amount of seconds that the should token is valid")
+
+	rootCmd.AddCommand(downloadCmd, uploadCmd)
+	rootCmd.Execute()
 
 	// bar := progressbar.Default(100)
 	// for i := 0; i < 100; i++ {
 	// 	bar.Add(1)
 	// 	time.Sleep(40 * time.Millisecond)
 	// }
-	writer := ansi.NewAnsiStdout()
+	// writer := ansi.NewAnsiStdout()
 
-	log.Info("Wrting to the thigny, starting now")
+	// log.Info("Wrting to the thigny, starting now")
 
-	bar1 := progressbar.NewOptions(1000,
-		progressbar.OptionFullWidth(),
-		progressbar.OptionSetWriter(writer),
-		progressbar.OptionEnableColorCodes(true),
-		progressbar.OptionShowBytes(true),
-		progressbar.OptionSetWidth(15),
-		progressbar.OptionSetDescription("[cyan][1/3][reset] Writing moshable file..."),
-		progressbar.OptionSetTheme(progressbar.Theme{
-			Saucer:        "[green]=[reset]",
-			SaucerHead:    "[green]>[reset]",
-			SaucerPadding: " ",
-			BarStart:      "[",
-			BarEnd:        "]",
-		}))
-	for i := 0; i < 1000; i++ {
-		bar1.Add(1)
-		time.Sleep(5 * time.Millisecond)
-	}
+	// bar1 := progressbar.NewOptions(1000,
+	// 	progressbar.OptionFullWidth(),
+	// 	progressbar.OptionSetWriter(writer),
+	// 	progressbar.OptionEnableColorCodes(true),
+	// 	progressbar.OptionShowBytes(true),
+	// 	progressbar.OptionSetWidth(15),
+	// 	progressbar.OptionSetDescription("[cyan][1/3][reset] Writing moshable file..."),
+	// 	progressbar.OptionSetTheme(progressbar.Theme{
+	// 		Saucer:        "[green]=[reset]",
+	// 		SaucerHead:    "[green]>[reset]",
+	// 		SaucerPadding: " ",
+	// 		BarStart:      "[",
+	// 		BarEnd:        "]",
+	// 	}))
+	// for i := 0; i < 1000; i++ {
+	// 	bar1.Add(1)
+	// 	time.Sleep(5 * time.Millisecond)
+	// }
 
-	fmt.Println()
-	log.Info("\nWrting to the thigny, starting now")
+	// fmt.Println()
+	// log.Info("\nWrting to the thigny, starting now")
 
-	bar2 := progressbar.NewOptions(1000,
-		progressbar.OptionFullWidth(),
-		progressbar.OptionSetWriter(writer),
-		progressbar.OptionEnableColorCodes(true),
-		progressbar.OptionShowBytes(true),
-		progressbar.OptionSetWidth(15),
-		progressbar.OptionSetDescription("[yellow][2/3] Second detached stage..."),
-		progressbar.OptionSetTheme(progressbar.Theme{
-			Saucer:        "[green]=[reset]",
-			SaucerHead:    "[green]>[reset]",
-			SaucerPadding: " ",
-			BarStart:      "[",
-			BarEnd:        "]",
-		}))
-	for i := 0; i < 1000; i++ {
-		bar2.Add(2)
-		time.Sleep(5 * time.Millisecond)
-	}
-	fmt.Println()
-	log.Info("\nWrting to the thigny, starting now")
+	// bar2 := progressbar.NewOptions(1000,
+	// 	progressbar.OptionFullWidth(),
+	// 	progressbar.OptionSetWriter(writer),
+	// 	progressbar.OptionEnableColorCodes(true),
+	// 	progressbar.OptionShowBytes(true),
+	// 	progressbar.OptionSetWidth(15),
+	// 	progressbar.OptionSetDescription("[yellow][2/3] Second detached stage..."),
+	// 	progressbar.OptionSetTheme(progressbar.Theme{
+	// 		Saucer:        "[green]=[reset]",
+	// 		SaucerHead:    "[green]>[reset]",
+	// 		SaucerPadding: " ",
+	// 		BarStart:      "[",
+	// 		BarEnd:        "]",
+	// 	}))
+	// for i := 0; i < 1000; i++ {
+	// 	bar2.Add(2)
+	// 	time.Sleep(5 * time.Millisecond)
+	// }
+	// fmt.Println()
+	// log.Info("\nWrting to the thigny, starting now")
 
-	bar := progressbar.NewOptions(1000,
-		progressbar.OptionFullWidth(),
-		progressbar.OptionSetWriter(writer),
-		progressbar.OptionEnableColorCodes(true),
-		progressbar.OptionShowBytes(true),
-		progressbar.OptionSetWidth(15),
-		progressbar.OptionSetDescription("[red][3/3] Deploying files..."),
-		progressbar.OptionSetTheme(progressbar.Theme{
-			Saucer:        "[green]=[reset]",
-			SaucerHead:    "[green]>[reset]",
-			SaucerPadding: " ",
-			BarStart:      "[",
-			BarEnd:        "]",
-		}))
-	for i := 0; i < 1000; i++ {
-		bar.Add(10)
-		time.Sleep(5 * time.Millisecond)
-	}
+	// bar := progressbar.NewOptions(1000,
+	// 	progressbar.OptionFullWidth(),
+	// 	progressbar.OptionSetWriter(writer),
+	// 	progressbar.OptionEnableColorCodes(true),
+	// 	progressbar.OptionShowBytes(true),
+	// 	progressbar.OptionSetWidth(15),
+	// 	progressbar.OptionSetDescription("[red][3/3] Deploying files..."),
+	// 	progressbar.OptionSetTheme(progressbar.Theme{
+	// 		Saucer:        "[green]=[reset]",
+	// 		SaucerHead:    "[green]>[reset]",
+	// 		SaucerPadding: " ",
+	// 		BarStart:      "[",
+	// 		BarEnd:        "]",
+	// 	}))
+	// for i := 0; i < 1000; i++ {
+	// 	bar.Add(10)
+	// 	time.Sleep(5 * time.Millisecond)
+	// }
 
-	io.MultiWriter()
+	// io.MultiWriter()
 }
 
 func compress(src string, buf io.Writer) error {
