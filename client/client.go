@@ -4,6 +4,7 @@ import (
 	"EkSukkel/moeggesukkel"
 	"archive/tar"
 	"compress/gzip"
+	"context"
 	"fmt"
 	"io"
 	"os"
@@ -19,25 +20,46 @@ import (
 
 var log = flogging.MustGetLogger("MAIN")
 var conn *grpc.ClientConn
+var mgc moeggesukkel.MoegGeSukkelClient
 
-func upload(add, path string) {}
+func upload(address, path string) {
 
-func download(add, token string) {}
+	// Create client and
+	client(address)
 
-func client(add string) *moeggesukkel.MoegGeSukkelClient {
+	// Stream and error
+	ctx := context.Background()
+	stream, err := mgc.Upload(ctx)
+
+	if err != nil {
+		log.Panic("Error: ", err)
+	}
+
+	//
+
+	// stream.
+	for {
+	}
+
+}
+
+func download(address, token string) {
+	client(address)
+}
+
+func client(address string) { //moeggesukkel.MoegGeSukkelClient {
 	var err error
-	conn, err = grpc.Dial(add)
+	conn, err = grpc.Dial(address)
 	if err != nil {
 		log.Panic("failed to create gRPC connection")
 	}
 
-	mgc := moeggesukkel.NewMoegGeSukkelClient(conn)
+	mgc = moeggesukkel.NewMoegGeSukkelClient(conn)
 
-	return &mgc
+	// return mgc
 }
 
 func main() {
-
 	// Silent
 	var silent bool
 
@@ -91,6 +113,7 @@ func main() {
 				address = args[0]
 				other = args[1]
 				log.Info("[address]: ", address, "  [path/to/file]: ", other)
+				upload(address, other)
 			}
 
 		},
