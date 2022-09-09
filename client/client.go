@@ -35,7 +35,7 @@ func upload(address, path string) {
 		log.Panic("Error: ", err)
 	}
 
-	//
+	// File
 
 	// stream.
 	for {
