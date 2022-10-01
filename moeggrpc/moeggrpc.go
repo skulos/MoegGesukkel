@@ -58,7 +58,7 @@ func (gs *GrpcServer) Upload(stream moeggesukkel.MoegGeSukkel_UploadServer) erro
 
 	// Reading all the files chunks and writing it to the file
 	fileName := BaseFilePath + fileRandomName
-	file, err := os.Open(fileName)
+	file, err := os.Create(fileName)
 
 	if err != nil {
 		log.Warning("ERROR = ", err)
